@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Send Current Location</title>
+<style>
+body{font-family:system-ui,sans-serif;max-width:520px;margin:0 auto;padding:28px 18px;text-align:center}
+button{font-size:18px;padding:14px 22px;border:0;border-radius:12px;cursor:pointer}
+#send{display:none;background:#25D366;color:#fff}
+#status{margin:22px 0;line-height:1.5}
+</style>
+</head>
+<body>
+<h2>📍 Send Current Location</h2>
+<p id="status">Tap the button and allow location access.</p>
+<button id="send">📲 Send on WhatsApp</button>
+
+<script>
+const WHATSAPP_NUMBER = "919355575422";
+const statusEl = document.getElementById("status");
+const sendBtn = document.getElementById("send");
+let waUrl = "";
+
+function pad(n){return String(n).padStart(2,"0");}
+
+function getTime(){
+  const d = new Date();
+  return `${pad(d.getDate())}-${pad(d.getMonth()+1)}-${d.getFullYear()} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+}
+
+function makeMessage(lat, lon){
+  const time = getTime();
+  const map = `https://maps.google.com/?q=${lat},${lon}`;
+  return `📍 Location Update\n🕐 Time: ${time}\n📌 Location: ${map}`;
+}
+
+function locate(){
+  if(!navigator.geolocation){
+    statusEl.textContent = "This browser does not support GPS location.";
+    return;
+  }
+  statusEl.textContent = "📡 Getting your current location…";
+  navigator.geolocation.getCurrentPosition(
+    pos => {
+      const lat = pos.coords.latitude.toFixed(6);
+      const lon = pos.coords.longitude.toFixed(6);
+      const msg = makeMessage(lat, lon);
+      waUrl = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(msg)}`;
+      statusEl.innerHTML = `✅ Location found<br>📍 ${lat}, ${lon}<br>🕐 ${getTime()}`;
+      sendBtn.style.display = "inline-block";
+    },
+    err => {
+      statusEl.textContent =
+        err.code === 1 ? "❌ Location permission was denied. Please allow location and try again."
+        : "❌ Could not get your location. Please try again.";
+    },
+    {enableHighAccuracy:true, timeout:15000, maximumAge:0}
+  );
+}
+
+sendBtn.onclick = () => { if(waUrl) location.href = waUrl; };
+locate();
+</script>
+</body>
+</html>
